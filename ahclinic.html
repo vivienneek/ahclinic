@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>School Clinic Management System</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+    body { background: #f3f7fb; color: #1d3557; }
+    header { background: #1d3557; color: white; padding: 16px 40px; display: flex; justify-content: space-between; align-items: center; }
+    header h1 { font-size: 22px; letter-spacing: 1px; }
+    nav a { color: white; margin: 0 15px; text-decoration: none; font-weight: 500; }
+    nav a:hover { text-decoration: underline; }
+
+    .container { max-width: 1200px; margin: 30px auto; padding: 20px; }
+
+    .hidden { display: none; }
+
+    .auth-container, .dashboard { background: #ffffff; border-radius: 15px; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    .auth-container { max-width: 400px; margin: 60px auto; text-align: center; }
+    input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; }
+    button { background: #457b9d; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    button:hover { background: #1d3557; }
+
+    .dashboard { display: grid; grid-template-columns: 1fr 2fr; gap: 30px; }
+    .sidebar { background: #f8fbff; border-radius: 15px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    .sidebar h2 { margin-bottom: 15px; font-size: 18px; }
+    .sidebar button { width: 100%; background: #457b9d; color: white; padding: 10px; border: none; border-radius: 10px; margin: 10px 0; cursor: pointer; font-weight: 600; }
+    .sidebar button:hover { background: #1d3557; }
+
+    .main { background: #ffffff; border-radius: 15px; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    .main h2 { font-size: 22px; margin-bottom: 15px; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+    .card { background: #e9f1fa; padding: 20px; border-radius: 12px; text-align: center; transition: 0.3s ease; cursor: pointer; }
+    .card:hover { background: #a8dadc; color: white; transform: translateY(-5px); }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+    th { background: #f1f5f9; }
+    tr:hover { background: #f7faff; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>School Clinic Management System</h1>
+    <nav>
+      <a href="#" onclick="showAuth('login')">Login</a>
+      <a href="#" onclick="showAuth('signup')">Sign Up</a>
+    </nav>
+  </header>
+
+  <div id="auth-section" class="auth-container">
+    <h2 id="auth-title">Sign In</h2>
+    <input type="text" id="auth-username" placeholder="Username" />
+    <input type="password" id="auth-password" placeholder="Password" />
+    <button id="auth-button" onclick="authenticate()">Sign In</button>
+    <p id="toggle-text">Don't have an account? <a href="#" onclick="toggleAuth()">Sign Up</a></p>
+  </div>
+
+  <div id="dashboard" class="container hidden">
+    <div class="dashboard">
+      <div class="sidebar">
+        <h2>Navigation</h2>
+        <button onclick="showSection('patients')">Patients</button>
+        <button onclick="showSection('appointments')">Appointments</button>
+        <button onclick="showSection('staff')">Staff</button>
+        <button onclick="showSection('reports')">Reports</button>
+        <button onclick="logout()">Logout</button>
+      </div>
+      <div class="main">
+        <h2 id="section-title">Dashboard</h2>
+        <div class="cards">
+          <div class="card" onclick="showSection('patients')">
+            <h3>Patients</h3><p>View and manage patient records</p>
+          </div>
+          <div class="card" onclick="showSection('appointments')">
+            <h3>Appointments</h3><p>Schedule and manage visits</p>
+          </div>
+          <div class="card" onclick="showSection('staff')">
+            <h3>Staff</h3><p>View medical team</p>
+          </div>
+          <div class="card" onclick="showSection('reports')">
+            <h3>Reports</h3><p>Track clinic performance</p>
+          </div>
+        </div>
+        <div id="content-area"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let mode = 'login';
+    function toggleAuth(){
+      mode = mode === 'login' ? 'signup' : 'login';
+      showAuth(mode);
+    }
+
+    function showAuth(type){
+      document.getElementById('auth-title').innerText = type === 'login' ? 'Sign In' : 'Sign Up';
+      document.getElementById('auth-button').innerText = type === 'login' ? 'Sign In' : 'Sign Up';
+      document.getElementById('toggle-text').innerHTML = type === 'login' ? `Don't have an account? <a href='#' onclick='toggleAuth()'>Sign Up</a>` : `Already have an account? <a href='#' onclick='toggleAuth()'>Sign In</a>`;
+      mode = type;
+      document.getElementById('auth-section').classList.remove('hidden');
+      document.getElementById('dashboard').classList.add('hidden');
+    }
+
+    function authenticate(){
+      const username = document.getElementById('auth-username').value;
+      const password = document.getElementById('auth-password').value;
+      if(!username || !password){alert('Enter all fields');return;}
+      let users = JSON.parse(localStorage.getItem('users')) || {};
+
+      if(mode === 'signup'){
+        if(users[username]){alert('User already exists');return;}
+        users[username] = password;
+        localStorage.setItem('users', JSON.stringify(users));
+        alert('Account created! You can now sign in.');
+        showAuth('login');
+      } else {
+        if(users[username] && users[username] === password){
+          localStorage.setItem('loggedInUser', username);
+          loadDashboard();
+        } else {
+          alert('Invalid credentials');
+        }
+      }
+    }
+
+    function loadDashboard(){
+      document.getElementById('auth-section').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+      document.getElementById('section-title').innerText = `Welcome, ${localStorage.getItem('loggedInUser')}`;
+      showSection('patients');
+    }
+
+    let patients = JSON.parse(localStorage.getItem('patients')) || [];
+
+    function showSection(section){
+      const area = document.getElementById('content-area');
+
+      if(section === 'patients'){
+        let html = `
+          <h3>Patients</h3>
+          <form onsubmit="addPatient(event)">
+            <input type="text" id="patient-name" placeholder="Name" required>
+            <input type="number" id="patient-age" placeholder="Age" required>
+            <input type="text" id="patient-condition" placeholder="Condition" required>
+            <button type="submit">Add Patient</button>
+          </form>
+          <table>
+            <thead><tr><th>Name</th><th>Age</th><th>Condition</th><th>Actions</th></tr></thead>
+            <tbody>${patients.map((p, i) => `
+              <tr>
+                <td>${p.name}</td>
+                <td>${p.age}</td>
+                <td>${p.condition}</td>
+                <td><button onclick='deletePatient(${i})'>Delete</button></td>
+              </tr>`).join('')}</tbody>
+          </table>`;
+        area.innerHTML = html;
+      } else {
+        area.innerHTML = `<h3>${section.charAt(0).toUpperCase() + section.slice(1)}</h3><p>Coming soon...</p>`;
+      }
+    }
+
+    function addPatient(e){
+      e.preventDefault();
+      const name = document.getElementById('patient-name').value;
+      const age = document.getElementById('patient-age').value;
+      const condition = document.getElementById('patient-condition').value;
+      patients.push({ name, age, condition });
+      localStorage.setItem('patients', JSON.stringify(patients));
+      showSection('patients');
+    }
+
+    function deletePatient(index){
+      patients.splice(index, 1);
+      localStorage.setItem('patients', JSON.stringify(patients));
+      showSection('patients');
+    }
+
+    function logout(){
+      localStorage.removeItem('loggedInUser');
+      showAuth('login');
+    }
+
+    if(localStorage.getItem('loggedInUser')){loadDashboard();}
+  </script>
+</body>
+</html>
